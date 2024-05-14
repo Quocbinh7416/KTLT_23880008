@@ -1,0 +1,125 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Product.ProductFindModel
+@{
+    ProductHandler.ReloadProducts();
+    Product[] products = ProductHandler.GetProducts();
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+
+    if (Request.Method == "POST") {
+        if (Request.Form["Id"] != string.Empty 
+            && int.TryParse(Request.Form["Id"], out int id)) {
+            products = ProductHandler.FindProductArrayById(id, products);
+        }
+        if (Request.Form["UserName"] != string.Empty) {
+            string name = Request.Form["UserName"];
+            products = ProductHandler.FindProductByName(name, products);
+        }
+        if (Request.Form["ProductCompany"] != string.Empty) {
+            string ProductCompany = Request.Form["ProductCompany"];
+            products = ProductHandler.FindProductByCompany(ProductCompany, products);
+        }
+        if (Request.Form["ManufacturedDate"] != string.Empty 
+            && DateOnly.TryParse(Request.Form["ManufacturedDate"], out DateOnly ManufacturedDate)) {
+            products = ProductHandler.FindProductByManufacturedDate(ManufacturedDate, products);
+        }
+        if (Request.Form["ExpiredDate"] != string.Empty 
+            && DateOnly.TryParse(Request.Form["ExpiredDate"], out DateOnly ExpiredDate)) {
+            products = ProductHandler.FindProductByExpiredDate(ExpiredDate, products);
+        }
+        if (Request.Form["Category"] != string.Empty) {
+            string Category = Request.Form["Category"];
+            products = ProductHandler.FindProductByCategory(Category, products);
+        }
+        if (Request.Form["Price"] != string.Empty
+            && double.TryParse(Request.Form["Price"], out double Price)) {
+            products = ProductHandler.FindProductByPrice(Price, products);
+        }
+        exceptions = exceptionList.GetExceptions();
+    }
+}
+
+
+<div class="container bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Tìm kiếm sản phẩm</h1>
+    </div>
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-2 form-label" for="ProductId">Mã sản phẩm</label>
+            <input class="col form-control" type="number" name="Id" placeholder="Nhập mã sản phẩm" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tên sản phẩm</label>
+            <input class="col form-control" type="text" name="Name" placeholder="Nhập tên sản phẩm" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Công ty sản xuất</label>
+            <input class="col form-control" type="text" name="ProductCompany" placeholder="Nhập tên công ty" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Ngày sản xuất</label>
+            <input class="col form-control" type="date" name="ManufacturedDate" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Ngày hết hạn</label>
+            <input class="col form-control" type="date" name="ExpiredDate" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Loại sản phẩm</label>
+            <input class="col form-control" type="text" name="Category" placeholder="Nhập loại sản phẩm" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Giá</label>
+            <input class="col form-control" type="number" name="Price" placeholder="Nhập giá" />
+        </div>
+
+        <input class="btn btn-info" type="submit" value="Tìm" />
+
+    </form>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>
+<div class="container w-80">
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách sản phẩm</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã sản phẩm</th>
+                <th scope="col">Tên sản phẩm</th>
+                <th scope="col">Công ty sản xuất</th>
+                <th scope="col">Ngày sản xuất</th>
+                <th scope="col">Ngày hết hạn</th>
+                <th scope="col">Loại hàng</th>
+                <th scope="col">Giá</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var p in products) {
+                if (@p.Name != null) {
+                    <tr>
+                        <th scope="row">@p.Id</th>
+                        <td>@p.Name</td>
+                        <td>@p.ProductCompany</td>
+                        <td>@p.ManufacturedDate</td>
+                        <td>@p.ExpiredDate</td>
+                        <td>@p.Category</td>
+                        <td>@p.Price</td>
+                    </tr>
+                }
+
+            }
+        </tbody>
+    </table>
+</div>

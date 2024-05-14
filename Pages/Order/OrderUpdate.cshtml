@@ -1,0 +1,111 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Order.OrderUpdateModel
+
+@{
+    Order order = new Order();
+
+    OrderHandler.ReloadOrders();
+    Order[] orders = OrderHandler.GetOrders();
+    DateOnly CreatedDate;
+    int Quantity;
+    OrderType orderType = OrderType.BUY;
+
+    Product[] products = ProductHandler.GetProducts();
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    int Id = -1;
+    if (Request.Method == "GET") {
+        if (!int.TryParse(Request.Query["id"], out Id)) {
+            exceptionList.AddException("Mã hóa đơn không hợp lệ");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Count() == 0) {
+            bool isValid = OrderValidation.FindById(Id, orders, out order);
+        }
+    } else if (Request.Method == "POST") {
+        _ = int.TryParse(Request.Query["id"], out Id);
+        if (!int.TryParse(Request.Form["Quantity"], out Quantity)) {
+            exceptionList.AddException("Nhập số lượng định dạng số");
+        }
+        if (Quantity < 0) {
+            exceptionList.AddException("Số lượng đơn hàng phải lớn hơn 0");
+        }
+        if (!DateOnly.TryParse(Request.Form["CreatedDate"], out CreatedDate)) {
+            exceptionList.AddException("Nhập ngày tạo đơn!");
+        }
+
+        exceptions = exceptionList.GetExceptions();
+        bool isValid = OrderValidation.FindById(Id, orders, out order);
+        if (exceptions.Length == 0) {
+            order.ProductName = Request.Form["ProductName"];
+            ProductValidation.FindByName(Request.Form["ProductName"], products, out Product curProduct);
+            order.ProductPrice = curProduct.Price;
+            order.ExpiredDate = curProduct.ExpiredDate;
+            order.OrderCreatedDate = CreatedDate;
+            order.Quantity = Quantity;
+            order.TotalPrice = Quantity * order.ProductPrice;
+
+
+            bool valid = OrderHandler.EditOrder(Id, order);
+            if (valid) {
+                result = $"Nhập hóa đơn thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Order/OrderManager");
+            } else {
+                result = $"Nhập hóa đơn thất bại!";
+            }
+        } else {
+            result = "Hóa đơn không hợp lệ: ";
+        }
+    }
+}
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Chỉnh sửa hoá đơn</h1>
+    </div>
+    @if(Id > 0) {
+        <form method="post">
+            <div class="mb-3 mt-3 row">
+                <label class="col-2 form-label" >Mã hóa đơn</label>
+                <input class="col form-control" type="text" name="Id" value="@order.Id" readonly="readonly"/>
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Tên đơn hàng</label>
+                <select class="col form-control" name="ProductName">
+                    @foreach (var s in products) {
+                        if (s.Name.Equals(order.ProductName)) {
+                            <option selected="selected">@s.Name</option>
+                        } else {
+                            <option>@s.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Ngày tạo đơn</label>
+                <input class="col form-control" type="date" name="CreatedDate" value="@order.GetCreatedDate()" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Loại đơn</label>
+                <input class="col form-control" type="text" name="OrderType" value="@order.GetOrderType()" readonly="readonly"/>
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Số lượng</label>
+                <input class="col form-control" type="number" name="Quantity" placeholder="Nhập số lượng" value="@order.Quantity" />
+            </div>
+            <input class="btn btn-danger" type="submit" value="Chỉnh sửa" />
+        </form>
+    }
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

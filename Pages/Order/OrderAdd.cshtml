@@ -1,0 +1,122 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Order.OrderAddModel
+
+@{
+    Order order = new Order();
+    DateOnly CreatedDate;
+    int Quantity;
+    int Id;
+    OrderType orderType = OrderType.BUY;
+
+    Product[] products = ProductHandler.GetProducts();
+
+    Stock[] stocks = StockHandler.GetStockList();
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    if (Request.Method == "POST") {
+
+        double price;
+        if (!int.TryParse(Request.Form["Id"], out Id)) {
+            exceptionList.AddException("Nhập mã hóa đơn dạng số");
+        }
+        if (OrderValidation.IsDuplicateId(Id)) {
+            exceptionList.AddException("Mã hóa đơn đã tồn tại");
+        }
+        if (!int.TryParse(Request.Form["Quantity"], out Quantity)) {
+            exceptionList.AddException("Nhập số lượng định dạng số");
+        }
+        if (Request.Form["ProductName"] == string.Empty) {
+            exceptionList.AddException("Tên sản hàng không được trống");
+        }
+        string ProductName = Request.Form["ProductName"];
+        Stock stock = StockHandler.GetStockByProductName(ProductName);
+        if (Quantity < 0) {
+            exceptionList.AddException("Số lượng đơn hàng phải lớn hơn 0");
+        }
+        orderType = OrderType.getOrderByValue(Request.Form["OrderType"]);
+        if (orderType.Equals(OrderType.SELL)) {
+            if (Quantity > stock.Quantity) {
+                exceptionList.AddException("Số lượng trong kho không đủ");
+            }
+        }
+        if (!DateOnly.TryParse(Request.Form["CreatedDate"], out CreatedDate)) {
+            exceptionList.AddException("Nhập ngày tạo đơn!");
+        }
+
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Length == 0) {
+            order.Id = Id;
+            order.ProductName = ProductName;
+            ProductValidation.FindByName(ProductName, products, out Product curProduct);
+            order.ProductPrice = curProduct.Price;
+            order.ExpiredDate = curProduct.ExpiredDate;
+            order.OrderCreatedDate = CreatedDate;
+            order.OrderType = orderType;
+            order.Quantity = Quantity;
+            order.TotalPrice = Quantity * order.ProductPrice;
+
+
+            bool valid = OrderHandler.AddOrder(order);
+            if (valid) {
+                result = $"Nhập hóa đơn thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Order/OrderManager");
+            } else {
+                result = $"Nhập hóa đơn thất bại!";
+            }
+        } else {
+            result = "hóa đơn không hợp lệ: ";
+        }
+    }
+}
+
+
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Thêm hoá đơn</h1>
+    </div>
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-2 form-label" for="ProductId">Mã hóa đơn</label>
+            <input class="col form-control" type="text" name="Id" placeholder="Nhập mã hóa đơn" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tên đơn hàng</label>
+            <select class="col form-control" name="ProductName">
+                @foreach (var s in products) {
+                    <option>@s.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Ngày tạo đơn</label>
+            <input class="col form-control" type="date" name="CreatedDate" value="2024-01-01" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Loại đơn</label>
+            <select class="col form-control" name="OrderType">
+                <option>@OrderType.BUY.Value</option>
+                <option>@OrderType.SELL.Value</option>
+            </select>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Số lượng</label>
+            <input class="col form-control" type="number" name="Quantity" placeholder="Nhập số lượng" />
+        </div>
+
+        <input class="btn btn-success" type="submit" value="Nhập" />
+
+    </form>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

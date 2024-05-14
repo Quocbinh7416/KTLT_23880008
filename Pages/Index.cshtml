@@ -2,9 +2,47 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
+    string username = HttpContext.Session.GetString("username");
+
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-3 p-5 my-5 w-75">
+    <div class="text-center">
+        <h1 class="display-4">ĐỒ ÁN MÔN HỌC</h1>
+        <h2 class="display-4">Kỹ Thuật Lập Trình</h2>
+        <h3 class="">Nguyễn Quốc Bình</h3>
+        <h3 class="">MSSV - 23880008</h3>
+
+    </div>
+    @if (string.IsNullOrEmpty(username)) {
+        <div class="d-flex justify-content-center" role="group">
+            <hr>
+            <h3 class="">Vui lòng đăng nhập</h3>
+        </div>
+        <div class="d-flex justify-content-center" role="group">
+            <button type="button" class="btn-lg btn-success">
+                <a class="text-decoration-none text-white" asp-page="/User/Login">Đăng nhập</a>
+            </button>
+            <button type="button" class="btn-lg btn-primary">
+                <a class="text-decoration-none text-white" asp-page="/User/Register">Đăng ký</a>
+            </button>
+        </div>
+    } else {
+        <div class="d-flex justify-content-center" role="group">
+            <button type="button" class="btn-lg btn-success">
+                <a class="text-decoration-none text-white" asp-page="/Product/ProductManager">Quản lý sản phẩm</a>
+            </button>
+            <button type="button" class="btn-lg btn-primary">
+                <a class="text-decoration-none text-white" asp-page="/Category/CategoryManager">Quản lý loại hàng</a>
+            </button>
+            <button type="button" class="btn-lg btn-warning">
+                <a class="text-decoration-none text-white" asp-page="/Order/OrderManager">Quản lý hóa đơn</a>
+            </button>
+            <button type="button" class="btn-lg btn-info">
+                <a class="text-decoration-none text-white" asp-page="/Stock/StockManager">Quản lý kho</a>
+            </button>
+
+        </div>
+    }
+
 </div>

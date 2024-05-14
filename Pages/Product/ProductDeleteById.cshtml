@@ -1,0 +1,95 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Product.ProductDeleteByIdModel
+@{
+    Product product = new Product();
+    ProductHandler.ReloadProducts();
+    Product[] products = ProductHandler.GetProducts();
+    Order[] orders = OrderHandler.GetOrders();
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+    int id;
+    if (Request.Method == "POST") {
+        if (!int.TryParse(Request.Form["Id"], out id)) {
+            exceptionList.AddException("Nhập mã sản phẩm dạng số");
+        }
+        bool isValid = ProductValidation.FindById(id, products, out product);
+        Order[] orderList = OrderHandler.FindOrderByProductName(product.Name, orders);
+        if (orderList.Length > 0) {
+            exceptionList.AddException("Sản phẩm đang có trong kho. Không thể xóa");
+        }
+
+        exceptions = exceptionList.GetExceptions();
+        if (exceptions.Count() == 0) {
+            isValid = ProductHandler.DeleteProduct(id);
+            if (isValid) {
+                Response.Redirect("/Product/ProductManager");
+            } else {
+                result = "Không tìm thấy sản phẩm";
+            }
+
+        }
+    } else {
+        if (!int.TryParse(Request.Query["ProductId"], out id)) {
+            exceptionList.AddException("Mã sản phẩm không hợp lệ");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Count() == 0) {
+            bool isValid = ProductValidation.FindById(id, products, out product);
+        }
+    }
+}
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Xóa sản phẩm</h1>
+    </div>
+    @if(id > 0) {
+
+        <div>
+            <h4 class="">Sản phẩm để xóa</h4>
+            <form method="post" asp-page-handler="FindProductById">
+                <div class="mb-3 mt-3 row">
+                    <label class="col-2 form-label" for="ProductId">Mã sản phẩm</label>
+                    <input class="col form-control" type="text" name="Id" value="@product.Id" readonly="readonly" />
+                </div>
+                <div class="mb-3 row">
+                    <label class="col-2 form-label">Tên sản phẩm</label>
+                    <input class="col form-control" type="text" name="Name" value="@product.Name" readonly="readonly" />
+                </div>
+                <div class="mb-3 row">
+                    <label class="col-2 form-label">Công ty sản xuất</label>
+                    <input class="col form-control" type="text" name="ProductCompany" value="@product.ProductCompany" readonly="readonly" />
+                </div>
+                <div class="mb-3 row">
+                    <label class="col-2 form-label">Ngày sản xuất</label>
+                    <input class="col form-control" type="date" name="ManufacturedDate" value="@product.GetManufacturedDate()" readonly="readonly" />
+                </div>
+                <div class="mb-3 row">
+                    <label class="col-2 form-label">Ngày hết hạn</label>
+                    <input class="col form-control" type="date" name="ExpiredDate" value="@product.GetExpiredDate()" readonly="readonly" />
+                </div>
+                <div class="mb-3 row">
+                    <label class="col-2 form-label">Loại sản phẩm</label>
+                    <input class="col form-control" type="date" name="Category" value="@product.Category" readonly="readonly" />
+                </div>
+                <div class="mb-3 row">
+                    <label class="col-2 form-label">Giá</label>
+                    <input class="col form-control" type="number" name="Price" value="@product.Price" readonly="readonly" />
+                </div>
+                <input class="btn btn-danger" type="submit" value="Xóa" />
+            </form>
+        </div>
+    }
+    
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

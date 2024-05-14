@@ -1,0 +1,60 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@model KTLT_23880008.Pages.Category.CategoryManagerModel
+@{
+    CategoryHandler.ReloadCategories();
+    Category[] categories = CategoryHandler.GetCategoryList();
+    string username = HttpContext.Session.GetString("username");
+    if (Request.Method == "GET") {
+        if (string.IsNullOrEmpty(username)) {
+            Response.Redirect("/Index");
+        }
+    }
+}
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Quản lý loại hàng</h1>
+    </div>
+
+    <div class="d-flex justify-content-center btn-group btn-group-lg" role="group">
+        <button type="button" class="btn btn-success">
+            <a class="text-decoration-none text-white" asp-page="/Category/CategoryAdd">Thêm loại hàng</a>
+        </button>
+        <button type="button" class="btn btn-info">
+            <a class="text-decoration-none text-white" asp-page="/Category/CategoryFind">Tìm loại hàng</a>
+        </button>
+    </div>
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách loại hàng</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã loại hàng</th>
+                <th scope="col">Tên loại hàng</th>
+                <th scope="col">Mã sản phẩm</th>
+                <th scope="col">Hiệu chỉnh</th>
+        </thead>
+
+        <tbody>
+            @foreach (var c in categories) {
+                <tr>
+                    <th scope="row">@c.Id</th>
+                    <td>@c.Name</td>
+                    <td>@c.GetProductIds()</td>
+                    <td>
+                        <button type="button" class="btn btn-warning">
+                            <a class="text-decoration-none text-white" href="/Category/CategoryUpdate?CategoryId=@c.Id">Chỉnh sửa</a>
+                        </button>
+                        <button type="button" class="btn btn-danger">
+                            <a class="text-decoration-none text-white" href="/Category/CategoryDelete?CategoryId=@c.Id">Xóa</a>
+                        </button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>

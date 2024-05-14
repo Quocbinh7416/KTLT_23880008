@@ -1,0 +1,133 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Product.ProductAddModel
+@{
+
+    Product product;
+    product.Id = 1;
+    product.Name = "";
+    product.ProductCompany = "";
+    product.ExpiredDate = new DateOnly(2024, 1, 1);
+    product.ManufacturedDate = new DateOnly(2025, 1, 1);
+    product.Category = "";
+    product.Price = 0;
+
+    string[] categories = CategoryHandler.GetCategoryNameList();
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    if (Request.Method == "POST") {
+        int id;
+        DateOnly manufacturedDate, expiredDate;
+        double price;
+        if (!int.TryParse(Request.Form["Id"], out id)) {
+            exceptionList.AddException("Nhập mã sản phẩm dạng số");
+        }
+        if (id <= 0) {
+            exceptionList.AddException("Mã sản phẩm phải là số dương");
+        }
+        if (ProductValidation.IsDuplicateId(id)) {
+            exceptionList.AddException("Mã sản phẩm đã tồn tại");
+        }
+        if (Request.Form["Name"] == string.Empty) {
+            exceptionList.AddException("Tên sản phẩm không được trống");
+        }
+        string name = Request.Form["Name"];
+        if (ProductValidation.IsExistProductName(name)) {
+            exceptionList.AddException("Tên sản phẩm đã tồn tại");
+        }
+        if (Request.Form["ProductCompany"] == string.Empty) {
+            exceptionList.AddException("Tên công ty không được trống");
+        }
+        if (!DateOnly.TryParse(Request.Form["ManufacturedDate"], out manufacturedDate)) {
+            exceptionList.AddException("Nhập ngày sản xuất!");
+        }
+        if (!DateOnly.TryParse(Request.Form["ExpiredDate"], out expiredDate)) {
+            exceptionList.AddException("Nhập ngày hết hạn!");
+        }
+        if (Request.Form["Category"] == string.Empty) {
+            exceptionList.AddException("Tên loại hàng không được trống");
+        }
+        if (!double.TryParse(Request.Form["Price"], out price)) {
+            exceptionList.AddException("Nhập giá định dạng số");
+        }
+        if (ProductValidation.IsValidProductPrice(price)) {
+            exceptionList.AddException("Giá phải lớn hơn 0");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Length == 0) {
+            product.Id = id;
+            product.Name = name;
+            product.ProductCompany = Request.Form["ProductCompany"];
+            product.ManufacturedDate = manufacturedDate;
+            product.ExpiredDate = expiredDate;
+            product.Category = Request.Form["Category"];
+            product.Price = price;
+
+            bool valid = ProductHandler.AddProduct(product);
+            if (valid) {
+                result = $"Nhập sản phẩm thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Product/ProductManager");
+            } else {
+                result = $"Nhập sản phẩm thất bại!";
+            }
+        } else {
+            result = "Sản phẩm không hợp lệ: ";
+        }
+    }
+}
+
+
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Thêm sản phẩm</h1>
+    </div>
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-2 form-label" for="ProductId">Mã sản phẩm</label>
+            <input class="col form-control" type="text" name="Id" placeholder="Nhập mã sản phẩm" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tên sản phẩm</label>
+            <input class ="col form-control" type="text" name="Name" placeholder="Nhập tên sản phẩm" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Công ty sản xuất</label>
+            <input class="col form-control" type="text" name="ProductCompany" placeholder="Nhập tên công ty" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Ngày sản xuất</label>
+            <input class="col form-control" type="date" name="ManufacturedDate" value="2024-01-01"/>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Ngày hết hạn</label>
+            <input class="col form-control" type="date" name="ExpiredDate" value="2024-01-01" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Loại sản phẩm</label>
+            <select class="col form-control" name="Category">
+                @foreach (var s in categories) {
+                    <option>@s</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Giá</label>
+            <input class="col form-control" type="number" name="Price" placeholder="Nhập giá" />
+        </div>
+
+        <input class="btn btn-primary" type="submit" value="Nhập" />
+
+    </form>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

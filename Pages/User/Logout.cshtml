@@ -1,0 +1,9 @@
+﻿@page
+@model KTLT_23880008.Pages.User.LogoutModel
+@{
+    if (Request.Method == "GET") {
+        HttpContext.Session.SetString("username", "");
+        await Task.Delay(500);
+        Response.Redirect("/Index");
+    }
+}

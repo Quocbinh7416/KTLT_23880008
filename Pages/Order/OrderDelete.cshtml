@@ -1,0 +1,87 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Order.OrderDeleteModel
+
+@{
+    Order order = new Order();
+    OrderHandler.ReloadOrders();
+    Order[] orders = OrderHandler.GetOrders();
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    int Id = -1;
+    if (Request.Method == "GET") {
+        if (!int.TryParse(Request.Query["id"], out Id)) {
+            exceptionList.AddException("Mã hóa đơn không hợp lệ");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Count() == 0) {
+            bool isValid = OrderValidation.FindById(Id, orders, out order);
+        }
+    } else if (Request.Method == "POST") {
+        if (!int.TryParse(Request.Query["id"], out Id)) {
+            exceptionList.AddException("Mã hóa đơn không hợp lệ");
+        }
+        exceptions = exceptionList.GetExceptions();
+        if (exceptions.Length == 0) {
+            bool valid = OrderHandler.DeleteOrderById(Id);
+            if (valid) {
+                result = $"Xóa hóa đơn thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Order/OrderManager");
+            } else {
+                result = $"Xóa hóa đơn thất bại!";
+            }
+        } else {
+            result = "Hóa đơn không hợp lệ: ";
+        }
+    }
+}
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Xóa hoá đơn</h1>
+    </div>
+    @if(Id > 0) {
+        <form method="post">
+            <div class="mb-3 mt-3 row">
+                <label class="col-2 form-label" >Mã hóa đơn</label>
+                <input class="col form-control" type="text" name="Id" value="@order.Id" readonly="readonly"/>
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Tên đơn hàng</label>
+                <input class="col form-control" type="text" name="ProductName" value="@order.ProductName" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Giá đơn hàng</label>
+                <input class="col form-control" type="text" name="ProductPrice" value="@order.ProductPrice" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Ngày tạo đơn</label>
+                <input class="col form-control" type="date" name="CreatedDate" value="@order.GetCreatedDate()" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Loại đơn</label>
+                <input class="col form-control" type="text" name="OrderType" value="@order.GetOrderType()" readonly="readonly"/>
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Số lượng</label>
+                <input class="col form-control" type="number" name="Quantity" value="@order.Quantity" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Tổng giá</label>
+                <input class="col form-control" type="number" name="TotalPrice" value="@order.TotalPrice" readonly="readonly" />
+            </div>
+            <input class="btn btn-danger" type="submit" value="Xóa" />
+        </form>
+    }
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

@@ -1,0 +1,83 @@
+﻿@page
+@model KTLT_23880008.Pages.Category.CategoryDeleteModel
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@{
+    CategoryHandler.ReloadCategories();
+    Category[] categories = CategoryHandler.GetCategoryList();
+
+    Category deleteCategory;
+    int id;
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    if (Request.Method == "POST") {
+        if (!int.TryParse(Request.Form["Id"], out id)) {
+            exceptionList.AddException("Nhập mã loại hàng dạng số");
+        }
+
+        if (!CategoryValidation.IsExistedId(id, categories, out deleteCategory)) {
+            exceptionList.AddException("Mã loại hàng không tồn tại");
+        }
+
+        if (!deleteCategory.Equals(default(Category)) && CategoryValidation.IsExistedProductId(deleteCategory)) {
+            exceptionList.AddException("Mã loại hàng vẫn còn sản phẩm không thể xóa");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Count() == 0) {
+
+            bool valid = CategoryHandler.DeleteCategory(deleteCategory);
+            if (valid) {
+                CategoryHandler.ReloadCategories();
+                result = $"Xóa loại hàng thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Category/CategoryManager");
+            } else {
+                result = $"Xóa loại hàng thất bại!";
+            }
+        } else {
+            result = "Loại hàng không hợp lệ: ";
+        }
+    } else {
+        if (!int.TryParse(Request.Query["CategoryId"], out id)) {
+            exceptionList.AddException("Mã loại hàng không hợp lệ");
+        }
+        if (!CategoryValidation.IsExistedId(id, categories, out deleteCategory)) {
+            exceptionList.AddException("Mã loại hàng không tồn tại");
+        }
+        exceptions = exceptionList.GetExceptions();
+    }
+}
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Xóa loại hàng</h1>
+    </div>
+    @if(id > 0) {
+        <form method="post">
+            <div class="mb-3 mt-3 row">
+                <label class="col-2 form-label">Mã loại hàng</label>
+                <input class="col form-control" type="number" name="Id" placeholder="Nhập mã loại hàng" value="@deleteCategory.Id" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Tên loại hàng</label>
+                <input class="col form-control" type="text" name="Name" placeholder="Nhập tên loại hàng" value="@deleteCategory.Name" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Danh sách mã sản phẩm</label>
+                <input class="col form-control" type="text" name="ProductIds" value="@deleteCategory.GetProductIds()" readonly="readonly" />
+            </div>
+            <input class="btn btn-danger" type="submit" value="Xóa" />
+        </form>
+    }
+
+
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

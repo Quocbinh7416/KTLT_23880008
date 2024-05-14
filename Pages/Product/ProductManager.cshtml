@@ -1,0 +1,72 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.NghiepVu;
+@model KTLT_23880008.Pages.Product.ProductModel
+
+@{
+    ProductHandler.ReloadProducts();
+    Product[] products = ProductHandler.GetProducts();
+    string username = HttpContext.Session.GetString("username");
+    if (Request.Method == "GET") {
+        if (string.IsNullOrEmpty(username)) {
+            Response.Redirect("/Index");
+        }
+    }
+}
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Quản lý sản phẩm</h1>
+    </div>
+
+    <div class="d-flex justify-content-center btn-group btn-group-lg" role="group">
+        <button type="button" class="btn btn-success">
+            <a class="text-decoration-none text-white" asp-page="/Product/ProductAdd">Thêm sản phẩm</a>
+        </button>
+        <button type="button" class="btn btn-info">
+            <a class="text-decoration-none text-white" asp-page="/Product/ProductFind">Tìm sản phẩm</a>
+        </button>
+    </div>
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách sản phẩm</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã sản phẩm</th>
+                <th scope="col">Tên sản phẩm</th>
+                <th scope="col">Công ty sản xuất</th>
+                <th scope="col">Ngày sản xuất</th>
+                <th scope="col">Ngày hết hạn</th>
+                <th scope="col">Loại hàng</th>
+                <th scope="col">Giá</th>
+                <th scope="col">Hiệu chỉnh</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var p in products) {
+                <tr>
+                    <th scope="row">@p.Id</th>
+                    <td>@p.Name</td>
+                    <td>@p.ProductCompany</td>
+                    <td>@p.ManufacturedDate</td>
+                    <td>@p.ExpiredDate</td>
+                    <td>@p.Category</td>
+                    <td>@p.Price</td>
+                    <td>
+                        <button type="button" class="btn btn-warning">
+                            <a class="text-decoration-none text-white" href="/Product/ProductUpdate?ProductId=@p.Id">Chỉnh sửa</a>
+                        </button>
+                        <button type="button" class="btn btn-danger">
+                            <a class="text-decoration-none text-white" href="/Product/ProductDeleteById?ProductId=@p.Id">Xóa</a>
+                        </button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>

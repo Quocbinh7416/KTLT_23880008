@@ -1,0 +1,72 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.User.RegisterModel
+
+@{
+    User[] existUsers = UserHandler.GetUserList();
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+    if (Request.Method == "POST") {
+        if (Request.Form["UserName"] == string.Empty) {
+            exceptionList.AddException("Tên đăng nhập không được trống");
+        }
+        string userName = Request.Form["UserName"];
+        if (UserValidation.FindByUserName(userName, existUsers, out User oldUser)) {
+            exceptionList.AddException("Tên đăng nhập đã tồn tại");
+        }
+        if (Request.Form["Password"] == string.Empty) {
+            exceptionList.AddException("Mật khẩu không được trống");
+        }
+        string passWord = Request.Form["Password"];
+        if (!UserValidation.CheckValidPassword(passWord)) {
+            exceptionList.AddException("Mật khẩu phải có ít nhất 3 ký tự");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+
+        if (exceptions.Length == 0) {
+            User user = new User();
+            user.UserName = userName;
+            user.Password = passWord;
+
+            bool valid = UserHandler.AddUser(user);
+            if (valid) {
+                result = $"Đăng ký {userName} thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Index");
+            } else {
+                result = $"Đăng ký {userName} thất bại!";
+            }
+        } else {
+            result = "Người dùng không hợp lệ: ";
+        }
+    }
+}
+
+
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-50">
+    <div class="text-center">
+        <h1 class="display-5">ĐĂNG KÝ</h1>
+    </div>
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-3 form-label" for="ProductId">Tên đăng nhập</label>
+            <input class="col form-control" type="text" name="UserName" placeholder="Nhập tên đăng nhập" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-3 form-label">Mật khẩu</label>
+            <input class="col form-control" type="password" name="Password" placeholder="Nhập mật khẩu" />
+        </div>
+
+        <input class="btn btn-primary" type="submit" value="Đăng ký" />
+
+    </form>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

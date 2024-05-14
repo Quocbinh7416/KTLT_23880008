@@ -1,0 +1,95 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Category.CategoryUpdateModel
+@{
+    CategoryHandler.ReloadCategories();
+    Category[] categories = CategoryHandler.GetCategoryList();
+
+    Category newCategory;
+    Category oldCategory;
+    newCategory.Id = 1;
+    newCategory.Name = "";
+    newCategory.ProductIds = new int[0];
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+    int id;
+    if (Request.Method == "POST") {
+        if (!int.TryParse(Request.Form["Id"], out id)) {
+            exceptionList.AddException("Nhập mã loại hàng dạng số");
+        }
+        if (id <= 0) {
+            exceptionList.AddException("Mã loại hàng phải là số dương");
+        }
+        if (Request.Form["UserName"] == string.Empty) {
+            exceptionList.AddException("Tên loại hàng không được trống");
+        }
+        string name = Request.Form["UserName"];
+
+        if (!CategoryValidation.IsExistedId(id, categories, out oldCategory)) {
+            exceptionList.AddException("Mã loại hàng không tồn tại");
+        }
+        if (CategoryValidation.IsDuplicateName(name, categories)) {
+            exceptionList.AddException("Tên loại hàng đã tồn tại");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Count() == 0) {
+            newCategory.Id = id;
+            newCategory.Name = name;
+
+            bool valid = CategoryHandler.EditCategory(oldCategory, newCategory);
+            if (valid) {
+                CategoryHandler.ReloadCategories();
+                result = $"Chỉnh sửa loại hàng thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Category/CategoryManager");
+            } else {
+                result = $"Chỉnh sửa loại hàng thất bại!";
+            }
+        } else {
+            result = "Loại hàng không hợp lệ: ";
+        }
+    } else {
+        if (!int.TryParse(Request.Query["CategoryId"], out id)) {
+            exceptionList.AddException("Mã loại hàng không hợp lệ");
+        }
+        if (!CategoryValidation.IsExistedId(id, categories, out oldCategory)) {
+            exceptionList.AddException("Mã loại hàng không tồn tại");
+        }
+        exceptions = exceptionList.GetExceptions();
+    }
+}
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Chỉnh sửa loại hàng</h1>
+    </div>
+    @if(id > 0) {
+        <form method="post">
+            <div class="mb-3 mt-3 row">
+                <label class="col-2 form-label">Mã loại hàng</label>
+                <input class="col form-control" type="number" name="Id" placeholder="Nhập mã loại hàng" value="@oldCategory.Id" readonly="readonly" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Tên loại hàng</label>
+                <input class="col form-control" type="text" name="Name" placeholder="Nhập tên loại hàng" value="@oldCategory.Name" />
+            </div>
+            <div class="mb-3 row">
+                <label class="col-2 form-label">Danh sách mã sản phẩm</label>
+                <input class="col form-control" type="text" name="ProductIds" value="@oldCategory.GetProductIds()" readonly="readonly" />
+            </div>
+            <input class="btn btn-danger" type="submit" value="Chỉnh sửa" />
+        </form>
+    }
+
+
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>

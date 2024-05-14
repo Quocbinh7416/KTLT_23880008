@@ -1,0 +1,64 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Category.CategoryFindModel
+
+@{
+    CategoryHandler.ReloadCategories();
+    Category[] categories = CategoryHandler.GetCategoryList();
+
+    if (Request.Method == "POST") {
+        if (Request.Form["Id"] != string.Empty
+            && int.TryParse(Request.Form["Id"], out int id)) {
+            categories = CategoryHandler.FindCategoryById(id, categories);
+        }
+        if (Request.Form["UserName"] != string.Empty) {
+            string name = Request.Form["UserName"];
+            categories = CategoryHandler.FindCategoryByName(name, categories);
+        }
+    }
+}
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Tìm loại hàng</h1>
+    </div>
+
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-2 form-label">Mã loại hàng</label>
+            <input class="col form-control" type="text" name="Id" placeholder="Nhập mã loại hàng" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tên loại hàng</label>
+            <input class="col form-control" type="text" name="Name" placeholder="Nhập tên loại hàng" />
+        </div>
+        <input class="btn btn-info" type="submit" value="Tìm" />
+    </form>
+
+
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách loại hàng</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã loại hàng</th>
+                <th scope="col">Tên loại hàng</th>
+                <th scope="col">Mã sản phẩm</th>
+        </thead>
+
+        <tbody>
+            @foreach (var c in categories) {
+                <tr>
+                    <th scope="row">@c.Id</th>
+                    <td>@c.Name</td>
+                    <td>@c.GetProductIds()</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>

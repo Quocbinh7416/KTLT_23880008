@@ -1,0 +1,86 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.NghiepVu;
+@model KTLT_23880008.Pages.Product.StockManagerModel
+
+@{
+    StockHandler.ReloadStocks();
+    Stock[] stocks = StockHandler.GetStockList();
+    Stock[] expiredStocks = StockHandler.GetExpiredStockList();
+    string username = HttpContext.Session.GetString("username");
+    if (Request.Method == "GET") {
+        if (string.IsNullOrEmpty(username)) {
+            Response.Redirect("/Index");
+        }
+    }
+}
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Quản lý kho hàng</h1>
+    </div>
+    <hr />
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách kho hàng</h1>
+    </div>
+    @if(stocks.Length > 0) {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Tên sản phẩm</th>
+                    <th scope="col">Ngày hết hạn</th>
+                    <th scope="col">Số lượng</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var s in stocks) {
+                    <tr>
+                        <th scope="row">@s.ProductName</th>
+                        <td>@s.ExpiredDate</td>
+                        <td>@s.Quantity</td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+    } else {
+        <div class="text-center mt-3 mb-3">
+            <div class="text-danger">Kho hàng đang trống</div>
+        </div>
+    }
+    <hr />
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách kho hàng đã hết hạng</h1>
+    </div>
+    @if(expiredStocks.Length > 0) {
+
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Tên sản phẩm</th>
+                    <th scope="col">Ngày hết hạn</th>
+                    <th scope="col">Số lượng</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var s in expiredStocks) {
+                    <tr>
+                        <th scope="row">@s.ProductName</th>
+                        <td>@s.ExpiredDate</td>
+                        <td>@s.Quantity</td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+    } else {
+        <div class="text-center mt-3 mb-3">
+            <div class="text-danger">Kho hàng hết hạn đang trống</div>
+        </div>
+    }
+</div>

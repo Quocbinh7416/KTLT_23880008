@@ -1,0 +1,105 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Category.CategoryAddModel
+@{
+
+    CategoryHandler.ReloadCategories();
+    Category[] categories = CategoryHandler.GetCategoryList();
+
+    Category category;
+    category.Id = 1;
+    category.Name = "";
+    category.ProductIds = new int[0];
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    if (Request.Method == "POST") {
+        if (!int.TryParse(Request.Form["Id"], out int id)) {
+            exceptionList.AddException("Nhập mã loại hàng dạng số");
+        }
+        if (id <= 0) {
+            exceptionList.AddException("Mã loại hàng phải là số dương");
+        }
+        if (Request.Form["UserName"] == string.Empty) {
+            exceptionList.AddException("Tên loại hàng không được trống");
+        }
+        string name = Request.Form["UserName"];
+
+        if (CategoryValidation.IsExistedId(id, categories)) {
+            exceptionList.AddException("Mã loại hàng đã tồn tại");
+        }
+        if (CategoryValidation.IsDuplicateName(name, categories)) {
+            exceptionList.AddException("Tên loại hàng đã tồn tại");
+        }
+        exceptions = exceptionList.GetExceptions();
+
+        if (exceptions.Count() == 0) {
+            category.Id = id;
+            category.Name = name;
+
+            bool valid = CategoryHandler.AddCategory(category);
+            if (valid) {
+                CategoryHandler.ReloadCategories();
+                result = $"Nhập loại hàng thành công!";
+                await Task.Delay(500);
+                Response.Redirect("/Category/CategoryManager");
+            } else {
+                result = $"Nhập loại hàng thất bại!";
+            }
+        } else {
+            result = "Loại hàng không hợp lệ: ";
+        }
+    }
+}
+
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Thêm sản phẩm</h1>
+    </div>
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-2 form-label">Mã loại hàng</label>
+            <input class="col form-control" type="text" name="Id" placeholder="Nhập mã loại hàng" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tên loại hàng</label>
+            <input class="col form-control" type="text" name="Name" placeholder="Nhập tên loại hàng" />
+        </div>
+
+        <input class="btn btn-primary" type="submit" value="Nhập" />
+
+    </form>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+
+
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách loại hàng</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã loại hàng</th>
+                <th scope="col">Tên loại hàng</th>
+                <th scope="col">Mã sản phẩm</th>
+        </thead>
+
+        <tbody>
+            @foreach (var c in categories) {
+                <tr>
+                    <th scope="row">@c.Id</th>
+                    <td>@c.Name</td>
+                    <td>@c.GetProductIds()</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>

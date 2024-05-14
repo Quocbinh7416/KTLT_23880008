@@ -1,0 +1,90 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.NghiepVu;
+@model KTLT_23880008.Pages.Order.OrderManagerModel
+
+@{
+    OrderHandler.ReloadOrders();
+    OrderList OrderList = OrderHandler.GetOrderList();
+    Order[] Orders = OrderList.Orders;
+    Order[] SellOrders = OrderList.SellOrders;
+    Order[] BuyOrders = OrderList.BuyOrders;
+    string username = HttpContext.Session.GetString("username");
+    if (Request.Method == "GET") {
+        if (string.IsNullOrEmpty(username)) {
+            Response.Redirect("/Index");
+        }
+    }
+}
+
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-4">Quản lý hóa đơn</h1>
+    </div>
+
+    <div class="d-flex justify-content-center btn-group btn-group-lg" role="group">
+        <button type="button" class="btn btn-success">
+            <a class="text-decoration-none text-white" asp-page="/Order/OrderAdd">Thêm hóa đơn</a>
+        </button>
+        <button type="button" class="btn btn-info">
+            <a class="text-decoration-none text-white" asp-page="/Order/OrderFind">Tìm hóa đơn</a>
+        </button>
+    </div>
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách hóa đơn</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã hóa đơn</th>
+                <th scope="col">Tên đơn hàng</th>
+                <th scope="col">Giá đơn hàng</th>
+                <th scope="col">Hạn đơn hàng</th>
+                <th scope="col">Ngày tạo đơn</th>
+                <th scope="col">Loại</th>
+                <th scope="col">Số lượng</th>
+                <th scope="col">Tổng giá</th>
+                <th scope="col">Hiệu chỉnh</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var p in Orders) {
+                if(!p.Equals(default(Order))) {
+                    <tr>
+                        <th scope="row">@p.Id</th>
+                        <td>@p.ProductName</td>
+                        <td>@p.ProductPrice</td>
+                        <td>@p.GetExpiredDate()</td>
+                        <td>@p.GetCreatedDate()</td>
+                        <td>@p.GetOrderType()</td>
+                        <td>@p.Quantity</td>
+                        <td>@p.TotalPrice</td>
+                        <td>
+                            <button type="button" class="btn btn-warning">
+                                <a class="text-decoration-none text-white" href="/Order/OrderUpdate?id=@p.Id">Chỉnh sửa</a>
+                            </button>
+                            <button type="button" class="btn btn-danger">
+                                <a class="text-decoration-none text-white" href="/Order/OrderDelete?id=@p.Id">Xóa</a>
+                            </button>
+                        </td>
+                    </tr>
+                }
+
+            }
+
+        </tbody>
+    </table>
+    <hr />
+    <div class="d-flex justify-content-center btn-group btn-group" role="group">
+        <button type="button" class="btn btn-secondary">
+            <a class="text-decoration-none text-white" asp-page="/Order/BuyOrderManager">Danh sách hóa đơn nhập</a>
+        </button>
+        <button type="button" class="btn btn-warning">
+            <a class="text-decoration-none text-white" asp-page="/Order/SellOrderManager">Danh sách hóa đơn bán</a>
+        </button>
+    </div>
+</div>

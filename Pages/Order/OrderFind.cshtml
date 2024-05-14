@@ -1,0 +1,139 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.NghiepVu;
+@model KTLT_23880008.Pages.Order.OrderFindModel
+
+@{
+    OrderHandler.ReloadOrders();
+    OrderList OrderList = OrderHandler.GetOrderList();
+    Order[] Orders = OrderList.Orders;
+    Product[] products = ProductHandler.GetProducts();
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+
+    if (Request.Method == "POST") {
+        if (Request.Form["Id"] != string.Empty
+            && int.TryParse(Request.Form["Id"], out int id)) {
+            Orders = OrderHandler.FindOrderArrayById(id, Orders);
+        }
+        if (Request.Form["ProductName"] != string.Empty) {
+            string ProductName = Request.Form["ProductName"];
+            Orders = OrderHandler.FindOrderByProductName(ProductName, Orders);
+        }
+
+        if (Request.Form["OrderCreatedDate"] != string.Empty
+            && DateOnly.TryParse(Request.Form["OrderCreatedDate"], out DateOnly CreatedDate)) {
+            Orders = OrderHandler.FindOrderByCreatedDate(CreatedDate, Orders);
+        }
+        if (Request.Form["OrderType"] != string.Empty) {
+            string OrderType = Request.Form["OrderType"];
+            Orders = OrderHandler.FindOrderByOrderType(OrderType, Orders);
+        }
+        if (Request.Form["Quantity"] != string.Empty
+            && int.TryParse(Request.Form["Quantity"], out int Quantity)) {
+            Orders = OrderHandler.FindOrderByQuantityOver(Quantity, Orders);
+        }
+        if (Request.Form["TotalPrice"] != string.Empty
+            && double.TryParse(Request.Form["TotalPrice"], out double TotalPrice)) {
+            Orders = OrderHandler.FindOrderByTotalPriceOver(TotalPrice, Orders);
+        }
+        exceptions = exceptionList.GetExceptions();
+    }
+}
+
+
+
+<div class="container mt-3 p-5 my-5 w-80">
+    <div class="text-center">
+        <h1 class="display-5">Tìm hoá đơn</h1>
+    </div>
+
+    <form method="post">
+        <div class="mb-3 mt-3 row">
+            <label class="col-2 form-label">Mã hóa đơn</label>
+            <input class="col form-control" type="text" name="Id" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tên đơn hàng</label>
+            <select class="col form-control" name="ProductName">
+                @foreach (var s in products) {
+                    <option>@s.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Ngày tạo đơn</label>
+            <input class="col form-control" type="date" name="CreatedDate" />
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Loại đơn</label>
+            <select class="col form-control" name="OrderType">
+                <option>@OrderType.BUY.Value</option>
+                <option>@OrderType.SELL.Value</option>
+            </select>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Số lượng >=</label>
+            <input class="col form-control" type="number" name="Quantity"/>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-2 form-label">Tổng giá >=</label>
+            <input class="col form-control" type="number" name="TotalPrice" />
+        </div>
+        <input class="btn btn-warning" type="submit" value="Tìm" />
+    </form>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+    <div class="text-center mt-3 mb-3">
+        <h1>Danh sách hóa đơn</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Mã hóa đơn</th>
+                <th scope="col">Tên đơn hàng</th>
+                <th scope="col">Giá đơn hàng</th>
+                <th scope="col">Ngày tạo đơn</th>
+                <th scope="col">Loại</th>
+                <th scope="col">Số lượng</th>
+                <th scope="col">Tổng giá</th>
+                <th scope="col">Hiệu chỉnh</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var p in Orders) {
+                if (!p.Equals(default(Order))) {
+                    <tr>
+                        <th scope="row">@p.Id</th>
+                        <td>@p.ProductName</td>
+                        <td>@p.ProductPrice</td>
+                        <td>@p.GetCreatedDate()</td>
+                        <td>@p.GetOrderType()</td>
+                        <td>@p.Quantity</td>
+                        <td>@p.TotalPrice</td>
+                        <td>
+                            <button type="button" class="btn btn-warning">
+                                <a class="text-decoration-none text-white" href="/Order/OrderUpdate?id=@p.Id">Chỉnh sửa</a>
+                            </button>
+                            <button type="button" class="btn btn-danger">
+                                <a class="text-decoration-none text-white" href="/Order/OrderDelete?id=@p.Id">Xóa</a>
+                            </button>
+                        </td>
+                    </tr>
+                }
+
+            }
+
+        </tbody>
+    </table>
+    <hr />
+    <button type="button" class="btn btn-info">
+        <a class="text-decoration-none text-white" asp-page="/Order/OrderManager">Trở về</a>
+    </button>
+</div>

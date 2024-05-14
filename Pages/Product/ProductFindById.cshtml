@@ -1,0 +1,53 @@
+﻿@page
+@using KTLT_23880008.Entity;
+@using KTLT_23880008.NghiepVu;
+@using KTLT_23880008.LuuTru;
+@using KTLT_23880008.Validation;
+@model KTLT_23880008.Pages.Product.ProductFindByIdModel
+@{
+    Product product;
+    ProductHandler.ReloadProducts();
+    Product[] products = ProductHandler.GetProducts();
+
+    ExceptionList exceptionList = new ExceptionList();
+    string result = "";
+    string[] exceptions = new string[0];
+    int id;
+    if (Request.Method == "POST") {
+        ProductHandler.ReloadProducts();
+        if (!int.TryParse(Request.Form["Id"], out id)) {
+            exceptionList.AddException("Nhập mã sản phẩm dạng số");
+        }
+        exceptions = exceptionList.GetExceptions();
+        if (exceptions.Count() == 0) {
+            bool isValid = ProductValidation.FindById(id, products, out product);
+            if (isValid) {
+                ProductHandler.SetEditedProduct(product);
+                Response.Redirect("/Product/ProductUpdate");
+            } else {
+                result = "Không tìm thấy sản phẩm";
+            }
+
+        }
+    }
+}
+
+<div class="container mt-3 p-5 my-5 bg-light text-dark w-80">
+    <div class="text-center">
+        <h1 class="display-5">Chỉnh sửa sản phẩm</h1>
+    </div>
+    <div>
+        <h1 class="">Nhập mã sản phẩm để chỉnh sửa</h1>
+        <form method="post" asp-page-handler="FindProductById">
+            <div class="mb-3 mt-3 row">
+                <label class="col-2 form-label" for="ProductId">Mã sản phẩm</label>
+                <input class="col form-control" type="text" name="Id" placeholder="Nhập mã sản phẩm" />
+            </div>
+            <input class="btn btn-info" type="submit" value="Tìm" />
+        </form>
+    </div>
+    <div class="display-6">@result</div>
+    @foreach (var e in exceptions) {
+        <div class="text-danger">- @e</div>
+    }
+</div>
